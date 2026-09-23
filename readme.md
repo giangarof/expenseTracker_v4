@@ -25,6 +25,6 @@ DB_URL= Your mongosb URL
 
 # Previous models
 
-[v3](https://github.com/giangarof/expenseTrackerFastAPI_sql): This version implements FastAPI along with SQL (SQLAlchemy)
-[v2](https://github.com/giangarof/expenseTrackerFastAPI): This version implements FastAPI
-[V1](https://github.com/giangarof/expenseTrackerTerminalPython): This version implements vanilla python. Can be used through the terminal.
+- [v3](https://github.com/giangarof/expenseTrackerFastAPI_sql): This version implements FastAPI along with SQL (SQLAlchemy)
+- [v2](https://github.com/giangarof/expenseTrackerFastAPI): This version implements FastAPI
+- [V1](https://github.com/giangarof/expenseTrackerTerminalPython): This version implements vanilla python. Can be used through the terminal.

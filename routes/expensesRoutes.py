@@ -10,38 +10,46 @@ router = APIRouter(prefix="/api/expenses", tags=["Expenses"])
 # Method: GET
 # route: /api/expenses/
 # description: fetch all expenses
-@router.get("/")
+@router.get("/", status_code=status.HTTP_200_OK)
 def getAll():
-    expenses = list(expenses_collection.find())
+    data = list(expenses_collection.find())
 
-    if not expenses:
-        return "No expenses, add some"
+    if not data:
+        raise HTTPException(status_code=404, detail="No expenses, add some")
 
-    for x in expenses:
+    for x in data:
         x["_id"] = str(x["_id"])
 
-    return expenses
+    return {"message": "Found", "data": data}
 
 
 # Method: GET
 # route: /api/expenses/{id}
 # description: fetch one by id
-@router.get("/{id}")
+@router.get("/{id}", status_code=status.HTTP_200_OK)
 def getOneById(id: str):
-    expense = expenses_collection.find_one({"_id": ObjectId(id)})
-    expense["_id"] = str(expense["_id"])
+    data = expenses_collection.find_one({"_id": ObjectId(id)})
+    if not data:
+        raise HTTPException(status_code=404, detail="Id doesnt exist")
 
-    return expense
+    data["_id"] = str(data["_id"])
+
+    return {"message": "Found", "data": data}
 
 
 # Method: POST
 # route: /api/expenses/
 # description: add a new expenses
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def addExpense(theExpense: ExpenseRequest):
-    newExpense = expenses_collection.insert_one(theExpense.model_dump())
 
-    return "added"
+    # Pydantic handles validation
+    # if not theExpense:
+    #     raise HTTPException(status_code=404, detail="error while adding new expense")
+
+    expenses_collection.insert_one(theExpense.model_dump())
+
+    return {"message": "Expense added successfully", "data": theExpense}
 
     # to check the properties of newExpense
     # dir(newExpense)
@@ -50,31 +58,31 @@ def addExpense(theExpense: ExpenseRequest):
 # Method: PUT
 # route: /api/expenses/{id}
 # description: Update expense by id
-@router.put("/{id}")
+@router.put("/{id}", status_code=status.HTTP_200_OK)
 def updateById(theExpense: ExpenseRequest, id: str):
     # find if exist
-    expense = expenses_collection.find_one({"_id": ObjectId(id)})
+    data = expenses_collection.find_one({"_id": ObjectId(id)})
 
-    if expense:
+    if data:
         expenses_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": theExpense.model_dump()}
         )
 
-        return "updated successfully"
+        return {"message": "Expense updated successfully", "data": theExpense}
 
-    return "it doesnt exist"
+    raise HTTPException(status_code=404, detail="Unable to update")
 
 
 # Method: DELETE
 # route: /api/expenses/{id}
 # description: Delete expense by id
-@router.delete("/{id}")
+@router.delete("/{id}", status_code=status.HTTP_200_OK)
 def deleteExpense(id: str):
     # find if exist
-    expense = expenses_collection.find_one({"_id": ObjectId(id)})
+    data = expenses_collection.find_one({"_id": ObjectId(id)})
 
-    if expense:
+    if data:
         expenses_collection.delete_one({"_id": ObjectId(id)})
-        return "deleted successfully"
+        return {"message": "Deleted successfully"}
 
-    return "it doesnt exist"
+    raise HTTPException(status_code=404, detail="Id doesnt exist")

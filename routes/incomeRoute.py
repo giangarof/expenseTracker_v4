@@ -10,57 +10,58 @@ router = APIRouter(prefix="/api/income", tags=["Income"])
 # Method: GET
 # route: /api/income/
 # description: fetch all expenses
-@router.get("/")
+@router.get("/", status_code=status.HTTP_200_OK)
 def getAll():
-    income = list(income_collection.find())
+    data = list(income_collection.find())
 
-    if not income:
-        return "nothing found"
+    if not data:
+        raise HTTPException(status_code=400, detail="No data available")
 
-    for x in income:
+    for x in data:
         x["_id"] = str(x["_id"])
 
-    return income
+    return {"message": "Found", "data": data}
 
 
 # Method: GET
 # route: /api/income/{id}
 # description: fetch one income by id
-@router.get("/{id}")
+@router.get("/{id}", status_code=status.HTTP_200_OK)
 def getOneById(id: str):
-    income = income_collection.find_one({"_id": ObjectId(id)})
-    if not income:
-        return "Nothing found"
+    data = income_collection.find_one({"_id": ObjectId(id)})
+    if not data:
+        raise HTTPException(status_code=400, detail="Id doesnt exist")
 
-    income["_id"] = str(income["_id"])
-    return income
+    data["_id"] = str(data["_id"])
+    return {"message": "Found", "data": data}
 
 
 # Method: POST
 # route: /api/income/
 # description: Add a new income
-@router.post("/")
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def addIncome(theIncome: IncomeRequest):
-    newincome = income_collection.insert_one(theIncome.model_dump())
-    return "added"
+    income_collection.insert_one(theIncome.model_dump())
+
+    return {"message": "Income added successfully", "data": theIncome}
 
 
 # Method: PUT
 # route: /api/income/
 # description: Update a income by id
-@router.put("/{id}")
+@router.put("/{id}", status_code=status.HTTP_200_OK)
 def updateById(theIncome: IncomeRequest, id: str):
     # check if exist
-    income = income_collection.find_one({"_id": ObjectId(id)})
+    data = income_collection.find_one({"_id": ObjectId(id)})
 
-    if income:
+    if data:
         income_collection.update_one(
             {"_id": ObjectId(id)}, {"$set": theIncome.model_dump()}
         )
 
-        return "updated successfully"
+        return {"message": "Income updated successfully", "data": theIncome}
 
-    return "nothing found"
+    raise HTTPException(status_code=400, detail="Id doesnt exist")
 
 
 # Method: DELETE
@@ -69,10 +70,10 @@ def updateById(theIncome: IncomeRequest, id: str):
 @router.delete("/{id}")
 def deleteById(id: str):
     # find if exist
-    income = income_collection.find_one({"_id": ObjectId(id)})
+    data = income_collection.find_one({"_id": ObjectId(id)})
 
-    if income:
+    if data:
         income_collection.delete_one({"_id": ObjectId(id)})
-        return "deleted successfully"
+        return {"message": "Income deleted successfully"}
 
-    return "it doesnt exist"
+    raise HTTPException(status_code=400, detail="Id doesnt exist")
