@@ -3,6 +3,7 @@ from bson import ObjectId
 from fastapi import Depends, FastAPI, APIRouter, HTTPException, status, Path
 from database.database import expenses_collection
 from schema.models import ExpenseRequest
+from utils import checkIfEmpty
 
 router = APIRouter(prefix="/api/expenses", tags=["Expenses"])
 
@@ -12,10 +13,9 @@ router = APIRouter(prefix="/api/expenses", tags=["Expenses"])
 # description: fetch all expenses
 @router.get("/", status_code=status.HTTP_200_OK)
 def getAll():
-    data = list(expenses_collection.find())
+    data = expenses_collection.find(()).to_list(length=None)
 
-    if not data:
-        raise HTTPException(status_code=404, detail="No expenses, add some")
+    checkIfEmpty(data, "No expenses available...")
 
     for x in data:
         x["_id"] = str(x["_id"])
@@ -29,8 +29,8 @@ def getAll():
 @router.get("/{id}", status_code=status.HTTP_200_OK)
 def getOneById(id: str):
     data = expenses_collection.find_one({"_id": ObjectId(id)})
-    if not data:
-        raise HTTPException(status_code=404, detail="Id doesnt exist")
+
+    checkIfEmpty(data, "Expense id does not exist")
 
     data["_id"] = str(data["_id"])
 
@@ -63,14 +63,13 @@ def updateById(theExpense: ExpenseRequest, id: str):
     # find if exist
     data = expenses_collection.find_one({"_id": ObjectId(id)})
 
-    if data:
-        expenses_collection.update_one(
-            {"_id": ObjectId(id)}, {"$set": theExpense.model_dump()}
-        )
+    checkIfEmpty(data, "Expense id does not exist")
 
-        return {"message": "Expense updated successfully", "data": theExpense}
+    expenses_collection.update_one(
+        {"_id": ObjectId(id)}, {"$set": theExpense.model_dump()}
+    )
 
-    raise HTTPException(status_code=404, detail="Unable to update")
+    return {"message": "Expense updated successfully", "data": theExpense}
 
 
 # Method: DELETE
@@ -78,11 +77,10 @@ def updateById(theExpense: ExpenseRequest, id: str):
 # description: Delete expense by id
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
 def deleteExpense(id: str):
+
     # find if exist
     data = expenses_collection.find_one({"_id": ObjectId(id)})
+    checkIfEmpty(data, "Expense id does not exist")
 
-    if data:
-        expenses_collection.delete_one({"_id": ObjectId(id)})
-        return {"message": "Deleted successfully"}
-
-    raise HTTPException(status_code=404, detail="Id doesnt exist")
+    expenses_collection.delete_one({"_id": ObjectId(id)})
+    return {"message": "Deleted successfully"}
